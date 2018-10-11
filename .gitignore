@@ -1,0 +1,12 @@
+pycore-venv/
+.eggs/
+.ropeproject/
+.__pycache__/
+*.pyc
+*.db
+*.swp
+*.cache
+.idea/
+.DS_Store
+*.log
+*.sqlite
