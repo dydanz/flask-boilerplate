@@ -1,6 +1,4 @@
-pycore-venv/
-.eggs/
-.ropeproject/
+log/flask-app/marketplace/*.log
 .__pycache__/
 *.pyc
 *.db
