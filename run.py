@@ -10,6 +10,5 @@ _app_name = config.get('flask-module', 'module_name')
 
 app = create_app(config.get('flask-module', 'env_name') or 'default')
 
-
 if __name__ == '__main__':
     app.run()

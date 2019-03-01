@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from marketplace import db
-
 from marketplace.persistence import constants
 
 
@@ -26,8 +25,12 @@ class Base(db.Model):
 class Merchant(Base):
     # field __tablename__ will shown as real tablename on DBMS.
     __tablename__ = 'merchant'
-    name = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
+
+    # field name will assigned as unique and non-nullable.
+    name = db.Column(db.String(constants.CONST_STR_128), unique=True, nullable=False)
+
     description = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
+    city = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
 
 
 class Customer(Base):
@@ -44,4 +47,3 @@ class Product(Base):
 class Transaction(Base):
     __tablename__ = 'order'
     name = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
-

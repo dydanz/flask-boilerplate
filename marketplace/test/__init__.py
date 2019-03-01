@@ -1,4 +1,5 @@
 import sys
+
 from unittest import TestCase
 
 from marketplace import create_app, db
@@ -55,10 +56,3 @@ class MockResponse:
 
 class Constants(object):
     PHONE_NUMBER = '+628123456789'
-    VERIFICATION_ID = '12345'
-    DEVICE_ID = '1234567890'
-    PUSH_TOKEN = '1234567890'
-    SESSION_ID = '1234567890'
-    DEVICE_TYPE_ANDROID = 'android'
-    DEVICE_TYPE_IOS = 'ios'
-    DEVICE_TYPE_WEB = 'web'

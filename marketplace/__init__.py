@@ -26,11 +26,18 @@ def register_blueprints(app):
     Register FLask-Blueprint
     """
     from marketplace.v1 import api, api_v1_blueprint
-
     app.register_blueprint(api_v1_blueprint)
+
+    from marketplace.merchant.v1.routes import ns as merchant_namespace
+    api.add_namespace(merchant_namespace)
 
 
 def create_app(config_name):
+    """
+    Initialize Logging, DB Connection, etc. within Current Application Context
+    :param config_name: Server Environment, e.g. Development/Staging/Production
+    :return: Flask Application
+    """
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     app_logger = logging.getLogger(__name__)
