@@ -34,9 +34,6 @@ manager.add_command(
         )
 )
 
-manager.run()
-
-
 @manager.command
 def cov():
     """Run the unit test with coverage."""
@@ -51,3 +48,33 @@ def cov():
     COV.html_report()
     COV.erase()
     return 0
+
+
+@manager.command
+def test(coverage=False, test_name=None):
+    """Run the unit test.
+
+    To run all test:
+        $ python3 manage.py test
+
+    Example of running an individual unit test:
+        $ python3 manage.py test -t api.test_cms_v2_routes.CMSApiTestCase
+
+    """
+    import unittest
+
+    test_dir = 'marketplace.test'
+
+    if test_name is None:
+        tests = unittest.TestLoader().discover(test_dir)
+    else:
+        tests = unittest.TestLoader().loadTestsFromName(test_dir + '.' + test_name)
+    runner = unittest.TextTestRunner(verbosity=2).run(tests)
+    sys.exit(not runner.wasSuccessful())
+
+
+manager.run()
+
+
+
+
