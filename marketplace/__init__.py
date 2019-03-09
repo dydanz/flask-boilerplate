@@ -31,6 +31,9 @@ def register_blueprints(app):
     from marketplace.merchant.v1.routes import ns as merchant_namespace
     api.add_namespace(merchant_namespace)
 
+    from marketplace.user.v1.routes import ns as user_namespace
+    api.add_namespace(user_namespace)
+
 
 def create_app(config_name):
     """

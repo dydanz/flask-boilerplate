@@ -1,8 +1,12 @@
+import logging
 import time
 
-import logging
-from flask import Blueprint, request, session
+from flask import Blueprint, g, request, session
 from flask_restplus import Api
+
+from common.authenticator.session_management import authorize_user_token
+from common.http import custom_errors as errors
+from marketplace.persistence.model import User
 
 log = logging.getLogger(__name__)
 authorizations = {
@@ -12,6 +16,7 @@ authorizations = {
         'name': 'auth-token-key'
     },
     'userkey': {
+
         'type': 'apiKey',
         'in': 'header',
         'name': 'username-key'
@@ -26,6 +31,9 @@ api = Api(version='1.0', title='Marketplace Restful API',
           )
 api_v1_blueprint = Blueprint('api.v1', __name__, url_prefix='/api/v1')
 api.init_app(api_v1_blueprint)
+
+# Enable By-Pass Auth for Swagger Endpoints
+NO_AUTH_ENDPOINTS = ['api.v1.doc', 'api.v1.specs', 'api.v1.user_user_auth_login_api']
 
 
 def statsd_put_start_endpoint(request):
@@ -51,8 +59,26 @@ def before_api_request():
     # Start Point of a request, will count how long (miliseconds) for a request to be processed
     statsd_put_start_endpoint(request)
 
+    # By-Pass Swagger Endpoints and Login
+    if request.endpoint in NO_AUTH_ENDPOINTS:
+        return
+
     # Get Request Header
     username_requester = request.headers.get('username-key')
+
+    # Will Return HTTP-401 status if Username is not found
+    user_account = User.query.filter(User.username == username_requester).first()
+    if user_account is None:
+        return errors.unauthorized('Unauthorized API access')
+
+    # Check whether given User auth token key is valid
+    user_session = authorize_user_token(request.headers.get('auth-token-key'), user_account)
+    if user_session is None:
+        return errors.unauthorized('Unauthorized API access')
+
+    # Store into global variable
+    g.current_session = user_session
+    g.current_user = user_account
 
     # Logging any request information, if necessary
     str_fmt = '[username:{username}][{method}][{url}]'

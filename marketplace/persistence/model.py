@@ -23,27 +23,50 @@ class Base(db.Model):
 
 
 class Merchant(Base):
-    # field __tablename__ will shown as real tablename on DBMS.
+    # __tablename__ will shown as real table-name on DBMS, not a table's column.
     __tablename__ = 'merchant'
 
-    # field name will assigned as unique and non-nullable.
+    # column name will assigned as unique and non-nullable.
     name = db.Column(db.String(constants.CONST_STR_128), unique=True, nullable=False)
+
+    # Owner of Merchant, must be a valid/registered User.
+    # Notes it's a Foreign Key to non-primary key, using column 'user.username' as a FK, not using
+    # 'user.id' as user's original PK
+    username = db.Column(db.String, db.ForeignKey('user.username'), nullable=True)
 
     description = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
     city = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
 
 
-class Customer(Base):
-    __tablename__ = 'customer'
-    name = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
-    phone = db.Column(db.String(constants.CONST_STR_16), unique=False, nullable=False)
-
-
 class Product(Base):
     __tablename__ = 'product'
     name = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
+    price = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
 
 class Transaction(Base):
     __tablename__ = 'order'
-    name = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
+    invoice_no = db.Column(db.String(constants.CONST_STR_128), unique=True, nullable=False)
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class User(Base):
+    __tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+
+    # column username will assigned as unique and non-nullable.
+    # index=True means this is an Indexable column with the predefined index to access it.
+    username = db.Column(db.String(constants.CONST_STR_64), unique=True, nullable=False, index=True)
+
+    password = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=False)
+    fullname = db.Column(db.String(constants.CONST_STR_128), unique=False, nullable=True)
+    phone = db.Column(db.String(constants.CONST_STR_16), unique=True, nullable=False)
+    email = db.Column(db.String(constants.CONST_STR_16), unique=True, nullable=True)
+
+
+class UserSession(Base):
+    __tablename__ = 'user_session'
+    id = db.Column(db.String(constants.CONST_STR_64), primary_key=True,
+                   unique=True, nullable=False, index=True)
+    username = db.Column(db.String(constants.CONST_STR_64), nullable=False, index=True)
+    secret_key = db.Column(db.String(constants.CONST_STR_64), nullable=False, index=True)

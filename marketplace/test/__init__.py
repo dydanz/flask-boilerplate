@@ -55,4 +55,13 @@ class MockResponse:
 
 
 class Constants(object):
+
+    # User Data
     PHONE_NUMBER = '+628123456789'
+    USERNAME = 'testuser'
+    PASSWORD = '123456'
+
+    # Merchant Data
+    MERCHANT_NAME = 'Merchant Test'
+    MERCHANT_DESC = 'Merchant Test Description'
+    MERCHANT_CITY = 'Jakarta'

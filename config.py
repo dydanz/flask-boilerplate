@@ -14,6 +14,9 @@ class Config:
 
     SECRET_KEY = os.environ.get('GLOBAL_SECRET_KEY') or 'GlobalSecretKey123'
 
+    # Initial refresh token set for 1 week * 4.
+    USER_TOKEN_EXPIRED = 604800 * 4
+
 
 class LocalConfig(Config):
     """
@@ -26,10 +29,13 @@ class LocalConfig(Config):
 
     # Database SQLAlchemy Configuration
     SQLALCHEMY_DATABASE_URI = 'postgresql://admin:password@localhost:5432/marketplace'
+
+    # State Master/Slave or Read-Replica DB Instances to tweak performance/fail-over
     SQLALCHEMY_BINDS = {
         'master': 'postgresql://admin:password@localhost:5432/marketplace',
         'read': 'postgresql://admin:password@localhost:5432/marketplace'
     }
+
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_ANALYTICS_DATABASE_NAME = 'analytic'
     SQLALCHEMY_POOL_SIZE = 10
@@ -76,11 +82,11 @@ class ProductionConfig(Config):
     DEBUG = False
     SECRET_KEY = os.environ.get('ProductionServer_SECRET_KEY') or 'ProductionServer_SECRET_KEY'
     # Database SQLAlchemy Configuration
-    SQLALCHEMY_DATABASE_URI = 'postgresql://admin:password@localhost:5432/marketplace'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://admin:password@your.ipserver.or.domain:5432/marketplace'
     # Enable Write/Reading on Master/Slave DB servers
     SQLALCHEMY_BINDS = {
-        'master': 'postgresql://admin:password@localhost:5432/marketplace',
-        'read': 'postgresql://admin:password@localhost-readonly:5432/marketplace'
+        'master': 'postgresql://admin:password@our.ipserver.or.domain:5432/marketplace',
+        'read': 'postgresql://admin:password@our.ipserver.or.domain-readonly:5432/marketplace'
     }
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_POOL_SIZE = 10

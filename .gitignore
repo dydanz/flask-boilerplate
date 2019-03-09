@@ -1,4 +1,6 @@
 log/flask-app/marketplace/*.log
+migrations/*
+log/*
 .__pycache__/
 *.pyc
 *.db

@@ -14,7 +14,7 @@ from marketplace.v1 import api, log
 ns = api.namespace('merchant', description='Operations related to Merchant Data')
 
 
-@ns.route('/merchant/data')
+@ns.route('/data')
 class MerchantDataApi(Resource):
     @crossdomain('*')
     @api.expect(merchant_search_parser, validate=True)
@@ -35,7 +35,7 @@ class MerchantDataApi(Resource):
         query_result = Merchant.query.filter(Merchant.id == merchant_id).first()
 
         if query_result is None:
-            return errors.bad_request('Merchant not found')
+            return errors.not_found('Merchant not found')
 
         return jsonify({
             'merchant_id': query_result.id,
@@ -59,7 +59,7 @@ class MerchantDataApi(Resource):
         query_result = Merchant.query.filter(Merchant.name == args.get('merchant_name')).first()
 
         if query_result:
-            return errors.bad_request('Given Merchant Name is already used.')
+            return errors.bad_request('Merchant Name is already used.')
 
         merchant = Merchant()
         merchant.name = args.get('merchant_name')
@@ -70,12 +70,12 @@ class MerchantDataApi(Resource):
             merchant.save()
         except exc.SQLAlchemyError as e:
             db.session.rollback()
-            log.error('Post Merchant Data failed, ' + str(e))
-            return errors.internal_server_error_msg('Post Merchant Data failed')
+            log.error('Save new Merchant Data failed, ' + str(e))
+            return errors.internal_server_error_msg('Save new Merchant Data failed')
 
         return jsonify({
             'status': 'OK',
-            'message': 'Post Merchant Data {} is Success'.format(merchant.name),
+            'message': 'Save new Merchant Data {} is Success'.format(merchant.name),
         })
 
     @crossdomain('*')
@@ -109,7 +109,7 @@ class MerchantDataApi(Resource):
 
         return jsonify({
             'status': 'OK',
-            'message': 'Post Merchant {} is Success'.format(merchant.name),
+            'message': 'Update Merchant {} is Success'.format(merchant.name),
         })
 
     @crossdomain('*')
@@ -146,8 +146,8 @@ class MerchantDataApi(Resource):
         })
 
 
-@ns.route('/merchant/search')
-class MerchantDataApi(Resource):
+@ns.route('/search')
+class MerchantSearchApi(Resource):
     @crossdomain('*')
     @api.expect(merchant_search_parser, validate=True)
     @api.doc(responses={

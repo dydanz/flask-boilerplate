@@ -1,8 +1,8 @@
 #!/usr/bin/env python
+import os
 import sys
 
 import coverage
-import os
 from flask_migrate import MigrateCommand
 from flask_script import Manager, Server
 
@@ -33,6 +33,7 @@ manager.add_command(
                 port=5000,
         )
 )
+
 
 @manager.command
 def cov():
@@ -74,7 +75,3 @@ def test(coverage=False, test_name=None):
 
 
 manager.run()
-
-
-
-
