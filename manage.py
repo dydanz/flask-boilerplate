@@ -36,6 +36,24 @@ manager.add_command(
 
 
 @manager.command
+def initdb():
+    from marketplace import db
+    from sqlalchemy import exc
+    from marketplace.persistence.model import User
+
+    user = User()
+    user.username = 'john_doe_1945'
+    user.fullname = 'John Doe'
+    user.password = 'this15secret'
+    user.phone = +6280123456789
+    try:
+        user.save()
+    except exc.SQLAlchemyError as e:
+        db.session.rollback()
+        print('Failed to Create First User, %s', e)
+
+
+@manager.command
 def cov():
     """Run the unit test with coverage."""
     from marketplace import test
