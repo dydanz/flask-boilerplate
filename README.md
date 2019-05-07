@@ -2,6 +2,8 @@ This project might not a boilerplate, but you can find an example how to build s
 
 I ran this template for one of startup company in Indonesia and able to serve millions request per day.
 
+You can implement Monorepo for multiple python-based projects with this schema, why? Facebook/Google uses a giant monorepo for their billions line of code and you can find another benefit using Monorepo at: https://gomonorepo.org/
+
 
 ### Getting Started
 
