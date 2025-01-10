@@ -1,109 +1,178 @@
-This project might not a boilerplate, but you can find an example how to build small-to-medium (or maybe even large) scale flask-based application with few cases that might be needed further on you development process.
+This project provides a template for building small-to-medium scale Flask applications with production-ready features. It has been proven to handle millions of requests per day in production environments.
 
-I ran this template for one of startup company in Indonesia and able to serve millions request per day.
-
-You can implement Monorepo for multiple python-based projects with this schema, why? Facebook/Google uses a giant monorepo for their billions line of code and you can find another benefit using Monorepo at: https://gomonorepo.org/
-
+This template can be used as part of a monorepo strategy for Python-based projects. For more information about monorepo benefits, visit: https://gomonorepo.org/
 
 ### Getting Started
 
 ------------------------------------------------------------------------
 
-##### 1. Virtual Environment 
-First, I'd recommend you to use Virtual Env and install the necessary package specifically only used by ts project:
+#### Option A: Using Docker (Recommended)
+
+1. **Build and Run with Docker Compose**
 ```sh
-$ virtualenv venv; 
+# Build and start the containers
+$ docker-compose up --build
+
+# Run in detached mode (optional)
+$ docker-compose up -d
+```
+
+2. **Run Database Migrations**
+```sh
+# Run migrations inside the container
+$ docker-compose exec web flask db upgrade
+
+# Initialize test user
+$ docker-compose exec web flask init-db
+```
+
+3. **Access the Application**
+- Web Application: http://localhost:5000
+- API Documentation: http://localhost:5000/api/v1/swagger
+
+4. **Useful Docker Commands**
+```sh
+# View logs
+$ docker-compose logs -f
+
+# Stop the containers
+$ docker-compose down
+
+# Stop and remove volumes (clean slate)
+$ docker-compose down -v
+
+# Run tests
+$ docker-compose exec web pytest
+
+# Run code quality checks
+$ docker-compose exec web flake8
+$ docker-compose exec web black .
+$ docker-compose exec web isort .
+```
+
+#### Option B: Local Development
+
+1. Virtual Environment 
+It's recommended to use a virtual environment. Modern Python projects often use `venv` (built into Python 3) or `poetry` for dependency management:
+
+```sh
+# Using venv (recommended for Python 3)
+$ python -m venv venv
 $ source venv/bin/activate 
-(env) $ pip install -r requirements.txt
+(venv) $ pip install -r requirements.txt
+
+# Alternative: Using Poetry (modern dependency management)
+$ poetry install
 ```
 
-##### 2. Setup The Database
-Then create a new database, we're using Postgresql here as an example.
+2. Setup The Database
+Create a new PostgreSQL database:
 ```sh
-postgres=# CREATE USER admin WITH PASSWORD 'password';
-postgres=# CREATE DATABASE marketplace;
-postgres=# GRANT ALL PRIVILEGES ON DATABASE marketplace TO admin;
+postgres=# CREATE USER postgres WITH PASSWORD 'postgres';
+postgres=# CREATE DATABASE flask_marketplace;
+postgres=# GRANT ALL PRIVILEGES ON DATABASE flask_marketplace TO postgres;
 ```
 
-##### 3. Migrate The Database Model
-As you can find database model on the application, firstly you should init the alembic folder, generate a migration script and upgrade (commit database model changes) into your DBMS.
+3. Database Migrations
+We use Alembic for database migrations. While the commands below still work, modern Flask projects often use Flask-Migrate (which wraps Alembic):
 
-This kind of operation should be done if you have changes on your database model/schema. Otherwise, SQLAlchemy unable correctly data model mapping between you model-app-code and actual table on DBMS.
-
-Create Alembic Versioning table on your db and folders on you project
 ```sh
-(env) $ python db migrate init
-```
-Generate Migration Script
-```sh
-(env) $ python db migrate migrate
-```
-Apply the DB Model Changes
-```sh
-(env) $ python db migrate upgrade
+# Modern approach using Flask-Migrate
+(venv) $ flask db init
+(venv) $ flask db migrate
+(venv) $ flask db upgrade
+
+# Legacy approach (still works)
+(venv) $ python db migrate init
+(venv) $ python db migrate migrate
+(venv) $ python db migrate upgrade
 ```
 
-##### 4. Run The Unit Test
-Writing proper Unit Test is one of important keys delivering clean working product, 
-so here they are in Flask, you should NOT ignore this one before committing the code.
+4. Testing
+For modern Flask testing, we recommend pytest along with the traditional unittest:
 ```sh
-(env) $ python manage.py test
+# Using pytest (recommended)
+(venv) $ pytest
+
+# Legacy approach
+(venv) $ python manage.py test
 ```
 
-##### 5. Flake8: Your Tool For Code Style Guide Enforcement
-Flake8 is a code style checker - _to beautify your code (and more readable!)_ - that can be integrated into your CI.
+5. Code Quality Tools
+Modern Python projects use multiple tools for code quality:
 ```sh
-(env) $ flake8 path/to/code/to/check.py
+# Flake8 for style checking
+(venv) $ flake8
+
+# Black for code formatting (recommended)
+(venv) $ black .
+
+# isort for import sorting (recommended)
+(venv) $ isort .
+
+# mypy for type checking (recommended)
+(venv) $ mypy .
 ```
-or just type on your root project folder, it will read *setup.cfg* file
+
+6. Running the Server
+Development server options:
 ```sh
-(env) $ flake8
+# Modern Flask CLI approach (recommended)
+(venv) $ export FLASK_APP=manage.py
+(venv) $ export FLASK_ENV=development  # FLASK_CONFIG is legacy
+(venv) $ flask run
+
+# Legacy approach (still works)
+(venv) $ python manage.py runserver
+
+# Production WSGI server
+# Note: Consider using uvicorn or hypercorn for ASGI support
+(venv) $ gunicorn --bind 0.0.0.0:5000 manage:app -w 4 --timeout 180
 ```
 
-##### 6. Run The Server
-You can setup and use IDE or use terminal console to run the server locally, with your virtual-environment activated:
+7. API Documentation
+Modern API documentation options:
+
+- Flask-RESTX (recommended): Swagger/OpenAPI documentation with interactive UI
+- Flask-Smorest: Modern OpenAPI documentation with marshmallow integration
+- Legacy Flask-Swagger (deprecated): Basic Swagger support
+
+Access the API documentation at: http://localhost:5000/api/v1/swagger
+
+8. Authentication Example
+Create a test user:
 ```sh
-(env) $ export FLASK_APP=manage.py;
-(env) $ export FLASK_CONFIG=development;
-(env) $ flask run
+(venv) $ flask init-db  # Modern CLI approach
+# or
+(venv) $ python manage.py initdb  # Legacy approach
 ```
-.. or as an alternative:
+
+Test authentication:
 ```sh
-(env) $ python manage.py runserver
-```
-.. or use to enable *gunicorn* or similar lightweight web server gateway interface (WSGI).
-```sh
-(env) $ gunicorn --bind 0.0.0.0:5000 manage:app -w 4 --timeout 180
-```
-
-By default Local Server will run on **http://localhost:5000** make sure the port not already in use.
-
-##### 6. Flask-Swagger 
-
-Swagger pages will automatically loaded and shown as your registered blueprint's version e.g. v1, v2 etc.
- 
-Check and Test APIs through Swagger [HERE](http://localhost:5000/api/v1/swagger).
-
-
-Before Testing the APIs, please run this command to create a new User as `John Doe`
-```sh
-(env) $ python manage.py initdb
+$ curl -X POST "http://localhost:5000/api/v1/user/auth/login" \
+  -H "accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john_doe_1946", "password": "this15secret"}'
 ```
 
-Test new user `John Doe` by using this bash shell command
-```sh
-(env) $ curl -X POST "http://localhost:5000/api/v1/user/auth/login" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"username\": \"john_doe_1946\", \"password\": \"this15secret\"}"
-```
-
-Expected will return a response as
-```
+Expected response:
+```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsImlhdCI6MTU1MjEyMTc1NiwiZXhwIjoxNTU0NTQwOTU2fQ.eyJzZXNzaW9uX2lkIjoiNmM1MzY2MDkiLCJ1c2VybmFtZSI6ImpvaG5fZG9lXzE5NDYifQ.TvQn76Ek7sPCLHS4hxMuk3XuQzvOt_pWL5w3_I84mvc",
+  "token": "eyJhbGciOiJIUzI1...",
   "username": "john_doe_1946"
 }
 ```
 
 ---
 
+### Recommended Modern Updates:
 
-Further Info? Contact me at [Linkedin](https://www.linkedin.com/in/dandi-diputra/)
+1. **Dependencies**: Consider using Poetry for dependency management
+2. **Type Hints**: Add Python type hints throughout the codebase
+3. **API Framework**: Consider migrating to Flask-RESTX or Flask-Smorest
+4. **Authentication**: Consider using Flask-JWT-Extended for JWT handling
+5. **Testing**: Add pytest with pytest-flask
+6. **Documentation**: Use modern OpenAPI 3.0 specifications
+7. **Async Support**: Consider adding ASGI support with Quart or async Flask
+
+For questions or professional inquiries: [Linkedin](https://www.linkedin.com/in/dandi-diputra/)
