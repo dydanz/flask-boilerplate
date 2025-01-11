@@ -1,6 +1,6 @@
 import logging
-
 import os
+from datetime import timedelta
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -17,27 +17,37 @@ class Config:
     # Initial refresh token set for 1 week * 4.
     USER_TOKEN_EXPIRED = 604800 * 4
 
+    DEBUG = False
 
-class LocalConfig(Config):
+    # Rate limiting
+    RATELIMIT_DEFAULT = "200 per day"
+    RATELIMIT_STORAGE_URL = "memory://"
+    
+    # JWT Settings
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string')
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
+
+
+class DevelopmentConfig(Config):
     """
-    Only applied when using Local(host) Server Configuration
+    Only applied when using Development Configuration
     """
     DEBUG = True
 
     # You can load from environment variables, if failed load `default` setting.
-    ENV_SECRET_KEY = os.environ.get('LOCAL_SECRET_KEY') or 'LocalSecretKey123'
+    SECRET_KEY = os.environ.get('DevServer_SECRET_KEY') or 'DevServerSecretKey123'
 
     # Database SQLAlchemy Configuration
-    SQLALCHEMY_DATABASE_URI = 'postgresql://admin:password@localhost:5432/marketplace'
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL',
+        'postgresql://postgres:postgres@localhost:5432/flask_marketplace')
 
-    # State Master/Slave or Read-Replica DB Instances to tweak performance/fail-over
+    # Enable Write/Reading on Master/Slave DB servers
     SQLALCHEMY_BINDS = {
-        'master': 'postgresql://admin:password@localhost:5432/marketplace',
-        'read': 'postgresql://admin:password@localhost:5432/marketplace'
+        'master': 'postgresql://postgres:postgres@localhost:5432/flask_marketplace',
+        'read': 'postgresql://postgres:postgres@localhost:5432/flask_marketplace'
     }
 
     SQLALCHEMY_TRACK_MODIFICATIONS = True
-    SQLALCHEMY_ANALYTICS_DATABASE_NAME = 'analytic'
     SQLALCHEMY_POOL_SIZE = 10
     SQLALCHEMY_MAX_OVERFLOW = 15
 
@@ -46,61 +56,46 @@ class TestingConfig(Config):
     """
     Only applied when running Test
     """
+    DEBUG = True
     TESTING = True
     SECRET_KEY = 'TestSecretKey123'
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-            'TEST_DATABASE_URL') or 'sqlite:///' + os.path.join(
-            basedir, 'data-test.sqlite'
-    )
+    
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL',
+        'postgresql://postgres:postgres@localhost:5432/flask_marketplace_test')
+    
     SQLALCHEMY_BINDS = {
-        'master': os.environ.get('TEST_DATABASE_URL') or 'sqlite:///' + os.path.join(
-                basedir, 'data-test.sqlite'),
-        'read': os.environ.get('TEST_DATABASE_URL') or 'sqlite:///' + os.path.join(
-                basedir, 'data-test.sqlite')
+        'master': 'postgresql://postgres:postgres@localhost:5432/flask_marketplace_test',
+        'read': 'postgresql://postgres:postgres@localhost:5432/flask_marketplace_test'
     }
+
+    PRESERVE_CONTEXT_ON_EXCEPTION = False
     SQLALCHEMY_TRACK_MODIFICATIONS = True
-
-
-class DevelopmentConfig(Config):
-    DEBUG = True
-
-    # You can load from environment variables, if failed load `default` setting.
-    SECRET_KEY = os.environ.get('DevServer_SECRET_KEY') or 'DevServerSecretKey123'
-    # Database SQLAlchemy Configuration
-    SQLALCHEMY_DATABASE_URI = 'postgresql://admin:password@localhost:5432/marketplace'
-    # Enable Write/Reading on Master/Slave DB servers
-    SQLALCHEMY_BINDS = {
-        'master': 'postgresql://admin:password@localhost:5432/marketplace',
-        'read': 'postgresql://admin:password@localhost-readonly:5432/marketplace'
-    }
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
-    SQLALCHEMY_POOL_SIZE = 10
-    SQLALCHEMY_MAX_OVERFLOW = 15
 
 
 class ProductionConfig(Config):
     DEBUG = False
     SECRET_KEY = os.environ.get('ProductionServer_SECRET_KEY') or 'ProductionServer_SECRET_KEY'
+
     # Database SQLAlchemy Configuration
-    SQLALCHEMY_DATABASE_URI = 'postgresql://admin:password@your.ipserver.or.domain:5432/marketplace'
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL',
+        'postgresql://postgres:postgres@localhost:5432/flask_marketplace')
+
     # Enable Write/Reading on Master/Slave DB servers
     SQLALCHEMY_BINDS = {
-        'master': 'postgresql://admin:password@our.ipserver.or.domain:5432/marketplace',
-        'read': 'postgresql://admin:password@our.ipserver.or.domain-readonly:5432/marketplace'
+        'master': 'postgresql://postgres:postgres@localhost:5432/flask_marketplace',
+        'read': 'postgresql://postgres:postgres@localhost:5432/flask_marketplace'
     }
+
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_POOL_SIZE = 10
     SQLALCHEMY_MAX_OVERFLOW = 15
 
 
-# Load You Multi-Environment Configuration
-config = {
-    'local': LocalConfig,
+config_by_name = {
     'development': DevelopmentConfig,
-    'testing': TestingConfig,
+    'test': TestingConfig,
     'production': ProductionConfig,
     'default': DevelopmentConfig
 }
 
-default_env = 'default'
-active_config = config[default_env]
+key = Config.SECRET_KEY
