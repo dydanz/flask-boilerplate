@@ -27,8 +27,8 @@ $ docker-compose exec web flask init-db
 ```
 
 3. **Access the Application**
-- Web Application: http://localhost:5000
-- API Documentation: http://localhost:5000/api/v1/swagger
+- Web Application: http://localhost:5001
+- API Documentation: http://localhost:5001/api/v1/swagger
 
 4. **Useful Docker Commands**
 ```sh

@@ -17,6 +17,11 @@ COPY . .
 # Set environment variables
 ENV FLASK_APP=manage.py
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Create and switch to non-root user
+RUN useradd -m myuser && chown -R myuser:myuser /app
+USER myuser
 
 # Expose port
 EXPOSE 5000

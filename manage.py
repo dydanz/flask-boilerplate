@@ -1,65 +1,61 @@
 #!/usr/bin/env python
 import os
 import sys
-
 import coverage
-from flask_migrate import MigrateCommand
-from flask_script import Manager, Server
-
-from marketplace import create_app
+from flask_migrate import Migrate
+from flask import current_app
+from marketplace import create_app, db
 
 COV = coverage.coverage(config_file='.coveragerc')
 
 environ = None
 if sys.argv[1] in ['cov', 'test']:
-    environ = os.getenv('FLASK_CONFIG') or 'testing'
+    environ = os.getenv('FLASK_CONFIG') or 'test'
     if sys.argv[1] == 'cov':
         COV.start()
 else:
-    environ = os.getenv('FLASK_CONFIG') or 'default'
+    environ = os.getenv('FLASK_CONFIG') or 'development'
 
 app = create_app(environ)
-manager = Manager(app)
+migrate = Migrate(app, db)
 
-# Enable us to manage and run flask-app locally
-manager.add_command('db', MigrateCommand)
-manager.add_command(
-        "runserver",
-        Server(
-                threaded=True,
-                use_reloader=manager.app.debug,
-                use_debugger=manager.app.debug,
-                host='0.0.0.0',
-                port=5000,
-        )
-)
-
-
-@manager.command
-def initdb():
-    from marketplace import db
-    from sqlalchemy import exc
+def init_db():
+    """Initialize the database with a test user."""
     from marketplace.persistence.model import User
+    from sqlalchemy import exc
 
     user = User()
     user.username = 'john_doe_1945'
     user.fullname = 'John Doe'
     user.password = 'this15secret'
-    user.phone = +6280123456789
+    user.phone = '+6280123456789'
     try:
         user.save()
+        print('Test user created successfully')
     except exc.SQLAlchemyError as e:
         db.session.rollback()
-        print('Failed to Create First User, %s', e)
+        print('Failed to Create First User:', e)
 
+@app.cli.command("init-db")
+def init_db_command():
+    """Create test user via Flask CLI."""
+    init_db()
+    print('Initialized the database.')
 
-@manager.command
-def cov():
-    """Run the unit test with coverage."""
-    from marketplace import test
+@app.cli.command("test")
+def test():
+    """Run the unit tests."""
+    import unittest
+    tests = unittest.TestLoader().discover('test')
+    unittest.TextTestRunner(verbosity=2).run(tests)
 
-    tests = test.TestLoader().discover('test')
-    test.TextTestRunner(verbosity=2).run(tests)
+@app.cli.command("cov")
+def coverage_report():
+    """Run the unit tests with coverage."""
+    import unittest
+    COV.start()
+    tests = unittest.TestLoader().discover('test')
+    unittest.TextTestRunner(verbosity=2).run(tests)
     COV.stop()
     COV.save()
     print('Coverage Summary:')
@@ -68,28 +64,5 @@ def cov():
     COV.erase()
     return 0
 
-
-@manager.command
-def test(coverage=False, test_name=None):
-    """Run the unit test.
-
-    To run all test:
-        $ python3 manage.py test
-
-    Example of running an individual unit test:
-        $ python3 manage.py test -t api.test_cms_v2_routes.CMSApiTestCase
-
-    """
-    import unittest
-
-    test_dir = 'marketplace.test'
-
-    if test_name is None:
-        tests = unittest.TestLoader().discover(test_dir)
-    else:
-        tests = unittest.TestLoader().loadTestsFromName(test_dir + '.' + test_name)
-    runner = unittest.TextTestRunner(verbosity=2).run(tests)
-    sys.exit(not runner.wasSuccessful())
-
-
-manager.run()
+if __name__ == '__main__':
+    app.run()

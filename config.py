@@ -82,11 +82,11 @@ class ProductionConfig(Config):
     SQLALCHEMY_MAX_OVERFLOW = 15
 
 
-# Load You Multi-Environment Configuration
-config_by_name = dict(
-    development=DevelopmentConfig,
-    test=TestingConfig,
-    production=ProductionConfig
-)
+config_by_name = {
+    'development': DevelopmentConfig,
+    'test': TestingConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig
+}
 
 key = Config.SECRET_KEY

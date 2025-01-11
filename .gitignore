@@ -1,12 +1,48 @@
-log/flask-app/marketplace/*.log
-migrations/*
-log/*
-.__pycache__/
-*.pyc
-*.db
-*.swp
-*.cache
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
 .idea/
-.DS_Store
-*.log
+.vscode/
+*.swp
+*.swo
+
+# Database
 *.sqlite
+*.db
+
+# Coverage
+.coverage
+htmlcov/
+
+# Migrations
+migrations/
+
+# Logs
+*.log
