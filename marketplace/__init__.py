@@ -30,4 +30,7 @@ def create_app(config_name='development'):
     from marketplace.health import health_bp
     app.register_blueprint(health_bp, url_prefix='/api')
 
+    from marketplace.merchant.v1 import merchant_bp
+    app.register_blueprint(merchant_bp, url_prefix='/api/v1/merchant')
+
     return app

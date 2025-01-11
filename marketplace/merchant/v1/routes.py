@@ -1,179 +1,148 @@
-from flask import jsonify, request
-from flask_restplus import Resource
-from flask_restplus.cors import crossdomain
-from sqlalchemy import exc
-
-from common.http import custom_errors as errors
+from flask import Blueprint, request
+from flask_restx import Api, Resource, Namespace, fields
 from marketplace import db
-from marketplace.merchant.v1.serializers import common_resp_fields, merchant_list_fields, \
-    merchant_pagination_fields, merchant_search_parser, post_merchant_data_parser, \
-    put_merchant_data_parser
 from marketplace.persistence.model import Merchant
-from marketplace.v1 import api, log
+from marketplace.merchant.v1.serializers import merchant_schema, merchants_schema
+from marketplace.auth.utils import token_required, admin_required
 
-ns = api.namespace('merchant', description='Operations related to Merchant Data')
+merchant_bp = Blueprint('merchant_v1', __name__)
 
+# Create API namespace
+api = Api(merchant_bp,
+    version='1.0',
+    title='Merchant API',
+    description='Merchant management operations',
+    doc='/swagger'
+)
 
-@ns.route('/data')
-class MerchantDataApi(Resource):
-    @crossdomain('*')
-    @api.expect(merchant_search_parser, validate=True)
-    @api.doc(responses={
-        200: ('Success', merchant_list_fields),
-        400: 'Bad Gateway',
-        401: 'Unauthorized',
-        404: ('Not Found', None),
-        500: 'Internal server error.'
-    })
+ns = Namespace('merchants', description='Merchant operations')
+api.add_namespace(ns)
+
+# API models
+merchant_model = ns.model('Merchant', {
+    'name': fields.String(required=True, description='Merchant name'),
+    'description': fields.String(required=False, description='Merchant description'),
+    'city': fields.String(required=True, description='City location')
+})
+
+merchant_response = ns.model('MerchantResponse', {
+    'id': fields.Integer(description='Merchant ID'),
+    'name': fields.String(description='Merchant name'),
+    'description': fields.String(description='Merchant description'),
+    'city': fields.String(description='City location'),
+    'owner_id': fields.Integer(description='Owner user ID'),
+    'created_at': fields.DateTime(description='Creation date'),
+    'updated_at': fields.DateTime(description='Last update date')
+})
+
+@ns.route('/')
+class MerchantList(Resource):
+    @ns.doc('list_merchants')
+    @ns.response(200, 'Success', [merchant_response])
     def get(self):
-        """
-        Get Merchant Data by given ID
-        :return: Merchant Details Information
-        """
-        merchant_id = request.args.get('id', 1, type=int)
+        """List all merchants"""
+        merchants = Merchant.query.all()
+        return merchants_schema.dump(merchants)
 
-        query_result = Merchant.query.filter(Merchant.id == merchant_id).first()
+    @ns.doc('create_merchant')
+    @ns.expect(merchant_model)
+    @ns.response(201, 'Merchant created', merchant_response)
+    @ns.response(400, 'Validation error')
+    @ns.doc(security='apikey')
+    @token_required
+    def post(self, current_user):
+        """Create a new merchant (Auth required)"""
+        data = request.get_json()
+        
+        if Merchant.query.filter_by(name=data.get('name')).first():
+            return {'message': 'Merchant name already exists'}, 400
 
-        if query_result is None:
-            return errors.not_found('Merchant not found')
-
-        return jsonify({
-            'merchant_id': query_result.id,
-            'merchant_name': query_result.name,
-            'description': query_result.description,
-            'city': query_result.city,
-        })
-
-    @crossdomain('*')
-    @api.expect(post_merchant_data_parser, validate=True)
-    @api.doc(responses={
-        200: ('Success', common_resp_fields),
-        400: 'Bad Gateway',
-        401: 'Unauthorized',
-        404: ('Not Found', None),
-        500: 'Internal server error.'
-    })
-    def post(self):
-        args = api.payload
-
-        query_result = Merchant.query.filter(Merchant.name == args.get('merchant_name')).first()
-
-        if query_result:
-            return errors.bad_request('Merchant Name is already used.')
-
-        merchant = Merchant()
-        merchant.name = args.get('merchant_name')
-        merchant.description = args.get('description')
-        merchant.city = args.get('city')
+        merchant = Merchant(
+            name=data.get('name'),
+            description=data.get('description'),
+            city=data.get('city'),
+            owner_id=current_user.id
+        )
 
         try:
             merchant.save()
-        except exc.SQLAlchemyError as e:
-            db.session.rollback()
-            log.error('Save new Merchant Data failed, ' + str(e))
-            return errors.internal_server_error_msg('Save new Merchant Data failed')
+            return merchant_schema.dump(merchant), 201
+        except Exception as e:
+            return {'message': str(e)}, 400
 
-        return jsonify({
-            'status': 'OK',
-            'message': 'Save new Merchant Data {} is Success'.format(merchant.name),
-        })
+@ns.route('/<int:id>')
+@ns.param('id', 'The merchant identifier')
+class MerchantResource(Resource):
+    @ns.doc('get_merchant')
+    @ns.response(200, 'Success', merchant_response)
+    @ns.response(404, 'Merchant not found')
+    def get(self, id):
+        """Get a merchant by ID"""
+        merchant = Merchant.query.get(id)
+        if not merchant:
+            return {'message': 'Merchant not found'}, 404
+        return merchant_schema.dump(merchant)
 
-    @crossdomain('*')
-    @api.expect(put_merchant_data_parser, validate=True)
-    @api.doc(responses={
-        200: ('Success', common_resp_fields),
-        400: 'Bad Gateway',
-        401: 'Unauthorized',
-        404: ('Not Found', None),
-        500: 'Internal server error.'
-    })
-    def put(self):
-        args = api.payload
+    @ns.doc('update_merchant')
+    @ns.expect(merchant_model)
+    @ns.response(200, 'Success', merchant_response)
+    @ns.response(404, 'Merchant not found')
+    @ns.doc(security='apikey')
+    @token_required
+    def put(self, current_user, id):
+        """Update a merchant (Auth required)"""
+        merchant = Merchant.query.get(id)
+        if not merchant:
+            return {'message': 'Merchant not found'}, 404
 
-        merchant = Merchant.query.filter(Merchant.id == args.get('merchant_id')).first()
+        # Only owner or admin can update
+        if not current_user.is_admin and merchant.owner_id != current_user.id:
+            return {'message': 'Access denied'}, 403
 
-        if merchant is None:
-            return errors.bad_request('Merchant not found')
-
-        # Get Data from request payload if any, otherwise will assigned to its original value
-        merchant.name = args.get('merchant_name', merchant.name)
-        merchant.description = args.get('description', merchant.description)
-        merchant.city = args.get('city', merchant.city)
+        data = request.get_json()
+        if 'name' in data:
+            merchant.name = data['name']
+        if 'description' in data:
+            merchant.description = data['description']
+        if 'city' in data:
+            merchant.city = data['city']
 
         try:
             merchant.save()
-        except exc.SQLAlchemyError as e:
-            db.session.rollback()
-            log.error('Update Merchant Data failed, ' + str(e))
-            return errors.internal_server_error_msg('Update Merchant data failed')
+            return merchant_schema.dump(merchant)
+        except Exception as e:
+            return {'message': str(e)}, 400
 
-        return jsonify({
-            'status': 'OK',
-            'message': 'Update Merchant {} is Success'.format(merchant.name),
-        })
+    @ns.doc('delete_merchant')
+    @ns.response(204, 'Merchant deleted')
+    @ns.response(404, 'Merchant not found')
+    @ns.doc(security='apikey')
+    @token_required
+    def delete(self, current_user, id):
+        """Delete a merchant (Auth required)"""
+        merchant = Merchant.query.get(id)
+        if not merchant:
+            return {'message': 'Merchant not found'}, 404
 
-    @crossdomain('*')
-    @api.expect(merchant_search_parser, validate=True)
-    @api.doc(responses={
-        200: ('Success', common_resp_fields),
-        400: 'Bad Gateway',
-        401: 'Unauthorized',
-        404: ('Not Found', None),
-        500: 'Internal server error.'
-    })
-    def delete(self):
-        """
-        DELETE Merchant Data by given ID
-        :return: Transaction Status
-        """
-        merchant_id = request.args.get('id', 1, type=int)
-
-        merchant = Merchant.query.filter(Merchant.id == merchant_id).first()
-
-        if merchant is None:
-            return errors.bad_request('Merchant not found')
+        # Only owner or admin can delete
+        if not current_user.is_admin and merchant.owner_id != current_user.id:
+            return {'message': 'Access denied'}, 403
 
         try:
-            merchant.delete()
-        except exc.SQLAlchemyError as e:
-            db.session.rollback()
-            log.error('Delete Merchant failed, ' + str(e))
-            return errors.internal_server_error_msg('Delete Merchant failed')
+            db.session.delete(merchant)
+            db.session.commit()
+            return '', 204
+        except Exception as e:
+            return {'message': str(e)}, 400
 
-        return jsonify({
-            'status': 'OK',
-            'message': 'Delete Merchant {} is Success'.format(merchant.name),
-        })
+# Add security definitions to Swagger UI
+authorizations = {
+    'apikey': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'Authorization',
+        'description': "Type in the *'Value'* input box below: **'Bearer &lt;JWT&gt;'**, where JWT is the token"
+    }
+}
 
-
-@ns.route('/search')
-class MerchantSearchApi(Resource):
-    @crossdomain('*')
-    @api.expect(merchant_search_parser, validate=True)
-    @api.doc(responses={
-        200: ('Success', merchant_pagination_fields),
-        400: 'Bad Gateway',
-        401: 'Unauthorized',
-        404: ('Not Found', None),
-        500: 'Internal server error.'
-    })
-    def get(self):
-        response = []
-        page = request.args.get('page', 1, type=int)
-        results_per_page = request.args.get('results_per_page', 10, type=int)
-        keywords = request.args.get('keywords')
-
-        # Will Query Merchants matches with given keyword(s) and paginate the query result.
-        query_result = Merchant.query.filter(
-                Merchant.merchant_name.ilike('%' + keywords + '%')).paginate(page, results_per_page)
-
-        for merchant in query_result.items:
-            response.append({
-                'merchant_id': merchant.merchant_id,
-                'merchant_name': merchant.merchant_name})
-
-        return jsonify({
-            'merchants': response, 'page': page,
-            'total_pages': query_result.total_pages if query_result else 0,
-            'results_per_page': results_per_page
-        })
+api.authorizations = authorizations

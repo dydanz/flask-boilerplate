@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import timedelta
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -17,6 +18,14 @@ class Config:
     USER_TOKEN_EXPIRED = 604800 * 4
 
     DEBUG = False
+
+    # Rate limiting
+    RATELIMIT_DEFAULT = "200 per day"
+    RATELIMIT_STORAGE_URL = "memory://"
+    
+    # JWT Settings
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string')
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
 
 
 class DevelopmentConfig(Config):
