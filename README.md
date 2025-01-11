@@ -1,7 +1,5 @@
 This project provides a template for building small-to-medium scale Flask applications with production-ready features. It has been proven to handle millions of requests per day in production environments.
 
-This template can be used as part of a monorepo strategy for Python-based projects. For more information about monorepo benefits, visit: https://gomonorepo.org/
-
 ### Getting Started
 
 ------------------------------------------------------------------------
