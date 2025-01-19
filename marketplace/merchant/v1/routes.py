@@ -1,31 +1,21 @@
 from flask import Blueprint, request
-from flask_restx import Api, Resource, Namespace, fields
-from marketplace import db
+from flask_restx import Resource, Namespace, fields
+from marketplace import db, api
 from marketplace.persistence.model import Merchant
 from marketplace.merchant.v1.serializers import merchant_schema, merchants_schema
 from marketplace.auth.utils import token_required, admin_required
 
-merchant_bp = Blueprint('merchant_v1', __name__)
-
-# Create API namespace
-api = Api(merchant_bp,
-    version='1.0',
-    title='Merchant API',
-    description='Merchant management operations',
-    doc='/swagger'
-)
-
-ns = Namespace('merchants', description='Merchant operations')
-api.add_namespace(ns)
+# Create namespace
+merchant_ns = Namespace('merchants', description='Merchant operations')
 
 # API models
-merchant_model = ns.model('Merchant', {
+merchant_model = merchant_ns.model('Merchant', {
     'name': fields.String(required=True, description='Merchant name'),
     'description': fields.String(required=False, description='Merchant description'),
     'city': fields.String(required=True, description='City location')
 })
 
-merchant_response = ns.model('MerchantResponse', {
+merchant_response = merchant_ns.model('MerchantResponse', {
     'id': fields.Integer(description='Merchant ID'),
     'name': fields.String(description='Merchant name'),
     'description': fields.String(description='Merchant description'),
@@ -35,20 +25,20 @@ merchant_response = ns.model('MerchantResponse', {
     'updated_at': fields.DateTime(description='Last update date')
 })
 
-@ns.route('/')
+@merchant_ns.route('/')
 class MerchantList(Resource):
-    @ns.doc('list_merchants')
-    @ns.response(200, 'Success', [merchant_response])
+    @merchant_ns.doc('list_merchants')
+    @merchant_ns.response(200, 'Success', [merchant_response])
     def get(self):
         """List all merchants"""
         merchants = Merchant.query.all()
         return merchants_schema.dump(merchants)
 
-    @ns.doc('create_merchant')
-    @ns.expect(merchant_model)
-    @ns.response(201, 'Merchant created', merchant_response)
-    @ns.response(400, 'Validation error')
-    @ns.doc(security='apikey')
+    @merchant_ns.doc('create_merchant')
+    @merchant_ns.expect(merchant_model)
+    @merchant_ns.response(201, 'Merchant created', merchant_response)
+    @merchant_ns.response(400, 'Validation error')
+    @merchant_ns.doc(security='apikey')
     @token_required
     def post(self, current_user):
         """Create a new merchant (Auth required)"""
@@ -70,12 +60,12 @@ class MerchantList(Resource):
         except Exception as e:
             return {'message': str(e)}, 400
 
-@ns.route('/<int:id>')
-@ns.param('id', 'The merchant identifier')
+@merchant_ns.route('/<int:id>')
+@merchant_ns.param('id', 'The merchant identifier')
 class MerchantResource(Resource):
-    @ns.doc('get_merchant')
-    @ns.response(200, 'Success', merchant_response)
-    @ns.response(404, 'Merchant not found')
+    @merchant_ns.doc('get_merchant')
+    @merchant_ns.response(200, 'Success', merchant_response)
+    @merchant_ns.response(404, 'Merchant not found')
     def get(self, id):
         """Get a merchant by ID"""
         merchant = Merchant.query.get(id)
@@ -83,11 +73,11 @@ class MerchantResource(Resource):
             return {'message': 'Merchant not found'}, 404
         return merchant_schema.dump(merchant)
 
-    @ns.doc('update_merchant')
-    @ns.expect(merchant_model)
-    @ns.response(200, 'Success', merchant_response)
-    @ns.response(404, 'Merchant not found')
-    @ns.doc(security='apikey')
+    @merchant_ns.doc('update_merchant')
+    @merchant_ns.expect(merchant_model)
+    @merchant_ns.response(200, 'Success', merchant_response)
+    @merchant_ns.response(404, 'Merchant not found')
+    @merchant_ns.doc(security='apikey')
     @token_required
     def put(self, current_user, id):
         """Update a merchant (Auth required)"""
@@ -113,10 +103,10 @@ class MerchantResource(Resource):
         except Exception as e:
             return {'message': str(e)}, 400
 
-    @ns.doc('delete_merchant')
-    @ns.response(204, 'Merchant deleted')
-    @ns.response(404, 'Merchant not found')
-    @ns.doc(security='apikey')
+    @merchant_ns.doc('delete_merchant')
+    @merchant_ns.response(204, 'Merchant deleted')
+    @merchant_ns.response(404, 'Merchant not found')
+    @merchant_ns.doc(security='apikey')
     @token_required
     def delete(self, current_user, id):
         """Delete a merchant (Auth required)"""
@@ -134,15 +124,3 @@ class MerchantResource(Resource):
             return '', 204
         except Exception as e:
             return {'message': str(e)}, 400
-
-# Add security definitions to Swagger UI
-authorizations = {
-    'apikey': {
-        'type': 'apiKey',
-        'in': 'header',
-        'name': 'Authorization',
-        'description': "Type in the *'Value'* input box below: **'Bearer &lt;JWT&gt;'**, where JWT is the token"
-    }
-}
-
-api.authorizations = authorizations

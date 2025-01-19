@@ -1,3 +1,5 @@
+import logging
+
 from flask import jsonify, request
 from flask_restx import Resource, Api, Namespace, fields
 
@@ -13,6 +15,8 @@ api = Api(user_bp,
     description='A simple marketplace API',
     doc='/swagger'
 )
+
+log = logging.getLogger(__name__)
 
 # Auth namespace for login/register
 auth_ns = Namespace('auth', description='Authentication operations')
@@ -67,6 +71,8 @@ class UserLogin(Resource):
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
+
+        log.info("Login request received for user: %s", username)
         
         user = User.query.filter_by(username=username).first()
         if user and user.verify_password(password):
@@ -75,6 +81,9 @@ class UserLogin(Resource):
                 'token': token,
                 'username': user.username
             }
+        
+        log.info("Login request REJECTED for user: %s", username)
+
         return {'message': 'Invalid credentials'}, 401
 
 # User CRUD Routes

@@ -1,1 +1,1 @@
-from marketplace.merchant.v1.routes import merchant_bp
+from marketplace.merchant.v1.routes import merchant_ns

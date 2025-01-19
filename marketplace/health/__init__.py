@@ -1,1 +1,1 @@
-from marketplace.health.routes import health_bp 
+from marketplace.health.routes import health_ns
