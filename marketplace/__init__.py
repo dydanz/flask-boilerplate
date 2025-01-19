@@ -24,7 +24,7 @@ api = Api(
     title='Flask Marketplace API',
     version='1.0',
     description='A simple marketplace API',
-    doc='/swagger',
+    doc='/api/v1/swagger',
     authorizations=authorizations
 )
 
@@ -47,9 +47,9 @@ def create_app(config_name='development'):
     from marketplace.merchant.v1.routes import merchant_ns
     from marketplace.health.routes import health_ns
 
-    api.add_namespace(auth_ns, path='/api/v1/user/auth')
-    api.add_namespace(users_ns, path='/api/v1/user/users')
-    api.add_namespace(merchant_ns, path='/api/v1/merchant')
-    api.add_namespace(health_ns, path='/api/health')
+    api.add_namespace(auth_ns, path='/user/auth')
+    api.add_namespace(users_ns, path='/user/users')
+    api.add_namespace(merchant_ns, path='/merchant')
+    api.add_namespace(health_ns, path='/health')
 
     return app
