@@ -9,6 +9,7 @@ services:
     environment:
       - FLASK_APP=manage.py
       - FLASK_ENV=production
+      - FLASK_CONFIG=production
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/flask_marketplace
     depends_on:
       - db

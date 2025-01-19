@@ -10,6 +10,24 @@ db = SQLAlchemy()
 ma = Marshmallow()
 migrate = Migrate()
 
+# Create main API instance
+authorizations = {
+    'apikey': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'Authorization',
+        'description': "Type in the *'Value'* input box below: **'Bearer &lt;JWT&gt;'**, where JWT is the token"
+    }
+}
+
+api = Api(
+    title='Flask Marketplace API',
+    version='1.0',
+    description='A simple marketplace API',
+    doc='/swagger',
+    authorizations=authorizations
+)
+
 def create_app(config_name='development'):
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
@@ -22,15 +40,16 @@ def create_app(config_name='development'):
     db.init_app(app)
     ma.init_app(app)
     migrate.init_app(app, db)
+    api.init_app(app)
 
-    # Register blueprints
-    from marketplace.user.v1 import user_bp
-    app.register_blueprint(user_bp, url_prefix='/api/v1/user')
+    # Register blueprints and namespaces
+    from marketplace.user.v1.routes import auth_ns, users_ns
+    from marketplace.merchant.v1.routes import merchant_ns
+    from marketplace.health.routes import health_ns
 
-    from marketplace.health import health_bp
-    app.register_blueprint(health_bp, url_prefix='/api')
-
-    from marketplace.merchant.v1 import merchant_bp
-    app.register_blueprint(merchant_bp, url_prefix='/api/v1/merchant')
+    api.add_namespace(auth_ns, path='/api/v1/user/auth')
+    api.add_namespace(users_ns, path='/api/v1/user/users')
+    api.add_namespace(merchant_ns, path='/api/v1/merchant')
+    api.add_namespace(health_ns, path='/api/health')
 
     return app
