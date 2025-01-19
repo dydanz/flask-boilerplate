@@ -1,6 +1,6 @@
-This project provides a template for building small-to-medium scale Flask applications with production-ready features. It has been proven to handle millions of requests per day in production environments.
+[![Docker](https://github.com/dydanz/flask-boilerplate/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/dydanz/flask-boilerplate/actions/workflows/docker-publish.yml)
 
-This template can be used as part of a monorepo strategy for Python-based projects. For more information about monorepo benefits, visit: https://gomonorepo.org/
+This project provides a template for building small-to-medium scale Flask applications with production-ready features. It has been proven to handle millions of requests per day in production environments.
 
 ### Getting Started
 
