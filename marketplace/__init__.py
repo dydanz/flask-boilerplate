@@ -46,10 +46,14 @@ def create_app(config_name='development'):
     from marketplace.user.v1.routes import auth_ns, users_ns
     from marketplace.merchant.v1.routes import merchant_ns
     from marketplace.health.routes import health_ns
+    from marketplace.product.v1 import category_ns, product_ns, pricing_ns
 
     api.add_namespace(auth_ns, path='/user/auth')
     api.add_namespace(users_ns, path='/user/users')
     api.add_namespace(merchant_ns, path='/merchant')
     api.add_namespace(health_ns, path='/health')
+    api.add_namespace(category_ns, path='/product/categories')
+    api.add_namespace(product_ns, path='/product/items')
+    api.add_namespace(pricing_ns, path='/product/pricing')
 
     return app
