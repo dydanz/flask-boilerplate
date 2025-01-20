@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import logging
 import uuid
 
 from flask import current_app
@@ -7,6 +8,8 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from sqlalchemy import exc
 
 from marketplace.persistence.model import User, UserSession
+
+log = logging.getLogger(__name__)
 
 
 def generate_random_session_id():
@@ -16,14 +19,14 @@ def generate_random_session_id():
 def generate_user_password(phone):
     # Create password from phone and randomization
     return base64.b64encode(hashlib.sha256((phone + str(uuid.uuid4().hex[:32])).encode(
-            encoding='utf-8')).hexdigest().encode()).decode('utf-8')
+        encoding='utf-8')).hexdigest().encode()).decode('utf-8')
 
 
 def generate_user_secret_key(username: str, phone_number: str):
     base_secret_key = username + phone_number + (current_app.config['SECRET_KEY'])
     random_secret_key = uuid.uuid1().hex
     user_secret_key = hashlib.sha1((base_secret_key + random_secret_key).encode(
-            encoding='utf-8')).hexdigest()
+        encoding='utf-8')).hexdigest()
 
     return user_secret_key
 
@@ -40,6 +43,7 @@ def parse_session_id(token_secret_key, token):
     try:
         data = s.loads(token)
     except Exception as e:
+        log.error(e)
         return None
     return data['session_id']
 

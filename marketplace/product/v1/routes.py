@@ -1,13 +1,15 @@
 from flask import request
 from flask_restx import Resource, Namespace, fields
-from marketplace import db, api
-from marketplace.persistence.model import ProductCategory, ProductItem, ProductPricing, ProductStatus
+
+from marketplace import db
+from marketplace.auth.utils import token_required
+from marketplace.persistence.model import (ProductCategory,
+                                           ProductItem, ProductPricing)
 from marketplace.product.v1.serializers import (
     category_schema, categories_schema,
     product_schema, products_schema,
     pricing_schema, pricings_schema
 )
-from marketplace.auth.utils import token_required, admin_required
 
 # Create namespaces
 category_ns = Namespace('categories', description='Product category operations')
@@ -44,6 +46,7 @@ pricing_model = pricing_ns.model('Pricing', {
     'valid_to': fields.DateTime(description='Valid to date')
 })
 
+
 # Category Routes
 @category_ns.route('/')
 class CategoryList(Resource):
@@ -65,6 +68,7 @@ class CategoryList(Resource):
         db.session.add(category)
         db.session.commit()
         return category_schema.dump(category), 201
+
 
 # Product Routes
 @product_ns.route('/')
@@ -88,6 +92,7 @@ class ProductList(Resource):
         db.session.commit()
         return product_schema.dump(product), 201
 
+
 # Pricing Routes
 @pricing_ns.route('/')
 class PricingList(Resource):
@@ -108,4 +113,4 @@ class PricingList(Resource):
         pricing = ProductPricing(**data)
         db.session.add(pricing)
         db.session.commit()
-        return pricing_schema.dump(pricing), 201 
+        return pricing_schema.dump(pricing), 201

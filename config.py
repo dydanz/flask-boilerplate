@@ -22,7 +22,7 @@ class Config:
     # Rate limiting
     RATELIMIT_DEFAULT = "200 per day"
     RATELIMIT_STORAGE_URL = "memory://"
-    
+
     # JWT Settings
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
@@ -39,7 +39,8 @@ class DevelopmentConfig(Config):
 
     # Database SQLAlchemy Configuration
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL',
-        'postgresql://postgres:postgres@localhost:5432/flask_marketplace')
+                                        'postgresql://postgres:postgres'
+                                        '@localhost:5432/flask_marketplace')
 
     # Enable Write/Reading on Master/Slave DB servers
     SQLALCHEMY_BINDS = {
@@ -59,10 +60,11 @@ class TestingConfig(Config):
     DEBUG = True
     TESTING = True
     SECRET_KEY = 'TestSecretKey123'
-    
+
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL',
-        'postgresql://postgres:postgres@localhost:5432/flask_marketplace_test')
-    
+                                        'postgresql://postgres:postgres'
+                                        '@localhost:5432/flask_marketplace_test')
+
     SQLALCHEMY_BINDS = {
         'master': 'postgresql://postgres:postgres@localhost:5432/flask_marketplace_test',
         'read': 'postgresql://postgres:postgres@localhost:5432/flask_marketplace_test'
@@ -78,7 +80,8 @@ class ProductionConfig(Config):
 
     # Database SQLAlchemy Configuration
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL',
-        'postgresql://postgres:postgres@localhost:5432/flask_marketplace')
+                                        'postgresql://postgres:postgres'
+                                        '@localhost:5432/flask_marketplace')
 
     # Enable Write/Reading on Master/Slave DB servers
     SQLALCHEMY_BINDS = {

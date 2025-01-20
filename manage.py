@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import os
 import sys
+
 import coverage
 from flask_migrate import Migrate
-from flask import current_app
+
 from marketplace import create_app, db
 
 COV = coverage.coverage(config_file='.coveragerc')
@@ -18,6 +19,7 @@ else:
 
 app = create_app(environ)
 migrate = Migrate(app, db)
+
 
 def init_db():
     """Initialize the database with a test user."""
@@ -36,11 +38,13 @@ def init_db():
         db.session.rollback()
         print('Failed to Create First User:', e)
 
+
 @app.cli.command("init-db")
 def init_db_command():
     """Create test user via Flask CLI."""
     init_db()
     print('Initialized the database.')
+
 
 @app.cli.command("test")
 def test():
@@ -48,6 +52,7 @@ def test():
     import unittest
     tests = unittest.TestLoader().discover('test')
     unittest.TextTestRunner(verbosity=2).run(tests)
+
 
 @app.cli.command("cov")
 def coverage_report():
@@ -63,6 +68,7 @@ def coverage_report():
     COV.html_report()
     COV.erase()
     return 0
+
 
 if __name__ == '__main__':
     app.run()

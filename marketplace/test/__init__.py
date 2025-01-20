@@ -1,7 +1,9 @@
 # Keep this empty for now
 
 from flask_testing import TestCase
+
 from marketplace import create_app, db
+
 
 class Constants:
     USERNAME = "testuser"
@@ -10,6 +12,7 @@ class Constants:
     MERCHANT_NAME = "Test Merchant"
     MERCHANT_DESC = "Test Description"
     MERCHANT_CITY = "Test City"
+
 
 class BaseTestCase(TestCase):
     def create_app(self):

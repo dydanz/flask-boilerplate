@@ -1,10 +1,13 @@
-from datetime import datetime
+import enum
 import uuid
+from datetime import datetime
+
 import bcrypt
 from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSON
 from sqlalchemy.types import Enum as SQLEnum
-import enum
+
 from marketplace import db
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -25,19 +28,20 @@ class User(db.Model):
     @password.setter
     def password(self, password):
         self.password_hash = bcrypt.hashpw(
-            password.encode('utf-8'), 
+            password.encode('utf-8'),
             bcrypt.gensalt()
         ).decode('utf-8')
 
     def verify_password(self, password):
         return bcrypt.checkpw(
-            password.encode('utf-8'), 
+            password.encode('utf-8'),
             self.password_hash.encode('utf-8')
         )
 
     def save(self):
         db.session.add(self)
         db.session.commit()
+
 
 class Merchant(db.Model):
     __tablename__ = 'merchants'
@@ -57,11 +61,13 @@ class Merchant(db.Model):
         db.session.add(self)
         db.session.commit()
 
+
 class ProductStatus(enum.Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     OUT_OF_STOCK = "out_of_stock"
     DELETED = "deleted"
+
 
 class ProductCategory(db.Model):
     __tablename__ = 'product_categories'
@@ -74,16 +80,18 @@ class ProductCategory(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Self-referential relationship for hierarchical categories
-    children = db.relationship('ProductCategory', 
-        backref=db.backref('parent', remote_side=[id]),
-        lazy='dynamic')
+    children = db.relationship('ProductCategory',
+                               backref=db.backref('parent', remote_side=[id]),
+                               lazy='dynamic')
+
 
 class ProductItem(db.Model):
     __tablename__ = 'product_items'
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     seller_id = db.Column(UUID(as_uuid=True), nullable=False)
-    category_id = db.Column(UUID(as_uuid=True), db.ForeignKey('product_categories.id'), nullable=False)
+    category_id = db.Column(UUID(as_uuid=True),
+                            db.ForeignKey('product_categories.id'), nullable=False)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     price = db.Column(db.Numeric(10, 2), nullable=False)
@@ -101,6 +109,7 @@ class ProductItem(db.Model):
     category = db.relationship('ProductCategory', backref='products')
     pricing_history = db.relationship('ProductPricing', backref='product', lazy='dynamic')
 
+
 class ProductPricing(db.Model):
     __tablename__ = 'product_pricing'
 
@@ -113,6 +122,7 @@ class ProductPricing(db.Model):
     valid_to = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 
 class UserSession:
     """Mock class for testing"""

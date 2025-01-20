@@ -1,20 +1,20 @@
 import logging
 
-from flask import jsonify, request
+from flask import request
 from flask_restx import Resource, Api, Namespace, fields
 
-from marketplace.user.v1 import user_bp
-from marketplace.persistence.model import User
-from marketplace.user.v1.serializers import user_schema, users_schema
 from marketplace.auth.utils import token_required, admin_required, generate_token
+from marketplace.persistence.model import User
+from marketplace.user.v1 import user_bp
+from marketplace.user.v1.serializers import user_schema, users_schema
 
 # Create API namespace
-api = Api(user_bp, 
-    version='1.0', 
-    title='Flask Marketplace API',
-    description='A simple marketplace API',
-    doc='/swagger'
-)
+api = Api(user_bp,
+          version='1.0',
+          title='Flask Marketplace API',
+          description='A simple marketplace API',
+          doc='/swagger'
+          )
 
 log = logging.getLogger(__name__)
 
@@ -59,6 +59,7 @@ login_response = auth_ns.model('LoginResponse', {
     'username': fields.String(description='Username')
 })
 
+
 # Auth Routes
 @auth_ns.route('/login')
 class UserLogin(Resource):
@@ -73,7 +74,7 @@ class UserLogin(Resource):
         password = data.get('password')
 
         log.info("Login request received for user: %s", username)
-        
+
         user = User.query.filter_by(username=username).first()
         if user and user.verify_password(password):
             token = generate_token(user.id)
@@ -81,10 +82,11 @@ class UserLogin(Resource):
                 'token': token,
                 'username': user.username
             }
-        
+
         log.info("Login request REJECTED for user: %s", username)
 
         return {'message': 'Invalid credentials'}, 401
+
 
 # User CRUD Routes
 @users_ns.route('/')
@@ -105,7 +107,7 @@ class UserList(Resource):
     def post(self):
         """Create a new user (Public endpoint for registration)"""
         data = request.get_json()
-        
+
         if User.query.filter_by(username=data.get('username')).first():
             return {'message': 'Username already exists'}, 400
 
@@ -121,6 +123,7 @@ class UserList(Resource):
         except Exception as e:
             return {'message': str(e)}, 400
 
+
 @users_ns.route('/<string:username>')
 @users_ns.param('username', 'The user identifier')
 class UserResource(Resource):
@@ -134,7 +137,7 @@ class UserResource(Resource):
         # Only admin or the user themselves can view details
         if not current_user.is_admin and current_user.username != username:
             return {'message': 'Access denied'}, 403
-            
+
         user = User.query.filter_by(username=username).first()
         if not user:
             return {'message': 'User not found'}, 404
@@ -150,7 +153,7 @@ class UserResource(Resource):
         """Update a user (Auth required)"""
         if not current_user.is_admin and current_user.username != username:
             return {'message': 'Access denied'}, 403
-            
+
         user = User.query.filter_by(username=username).first()
         if not user:
             return {'message': 'User not found'}, 404
@@ -181,11 +184,11 @@ class UserResource(Resource):
             return {'message': 'User not found'}, 404
 
         try:
-            db.session.delete(user)
-            db.session.commit()
+            User.query.delete(user)
             return '', 204
         except Exception as e:
             return {'message': str(e)}, 400
+
 
 # Add security definitions to Swagger UI
 authorizations = {
@@ -193,7 +196,8 @@ authorizations = {
         'type': 'apiKey',
         'in': 'header',
         'name': 'Authorization',
-        'description': "Type in the *'Value'* input box below: **'Bearer &lt;JWT&gt;'**, where JWT is the token"
+        'description': "Type in the *'Value'* input box below: "
+                       "**'Bearer &lt;JWT&gt;'**, where JWT is the token"
     }
 }
 
