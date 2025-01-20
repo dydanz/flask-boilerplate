@@ -113,3 +113,7 @@ class ProductPricing(db.Model):
     valid_to = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class UserSession:
+    """Mock class for testing"""
+    pass
