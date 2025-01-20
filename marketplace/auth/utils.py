@@ -1,8 +1,11 @@
-from functools import wraps
-from flask import request, current_app
-import jwt
 from datetime import datetime, timedelta
+from functools import wraps
+
+import jwt
+from flask import request, current_app
+
 from marketplace.persistence.model import User
+
 
 def generate_token(user_id):
     """Generate JWT token for user"""
@@ -20,6 +23,7 @@ def generate_token(user_id):
     except Exception as e:
         return str(e)
 
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -36,7 +40,7 @@ def token_required(f):
 
         try:
             payload = jwt.decode(
-                token, 
+                token,
                 current_app.config.get('SECRET_KEY'),
                 algorithms=["HS256"]
             )
@@ -47,7 +51,9 @@ def token_required(f):
             return {'message': 'Invalid token'}, 401
 
         return f(current_user, *args, **kwargs)
+
     return decorated
+
 
 def admin_required(f):
     @wraps(f)
@@ -56,4 +62,5 @@ def admin_required(f):
         if not current_user.is_admin:
             return {'message': 'Admin privilege required'}, 403
         return f(current_user, *args, **kwargs)
-    return decorated 
+
+    return decorated

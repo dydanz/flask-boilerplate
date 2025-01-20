@@ -2,8 +2,10 @@ import json
 from unittest.mock import patch
 from uuid import uuid4
 
-from marketplace.persistence.model import User, ProductCategory, ProductItem, ProductPricing, ProductStatus
+from marketplace.persistence.model import (User, ProductCategory,
+                                           ProductItem, ProductPricing, ProductStatus)
 from marketplace.test import BaseTestCase, Constants
+
 
 def init_product_data():
     # Create test user
@@ -42,13 +44,14 @@ def init_product_data():
 
     return category, product, pricing
 
+
 class ProductApiTestCase(BaseTestCase):
     @patch('marketplace.auth.utils.token_required')
     def test_get_categories_ok(self, mock_auth):
         category, _, _ = init_product_data()
-        
+
         response = self.client.get('/api/v1/product/categories')
-        
+
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertTrue(isinstance(data, list))
@@ -57,21 +60,21 @@ class ProductApiTestCase(BaseTestCase):
     @patch('marketplace.auth.utils.token_required')
     def test_create_category_ok(self, mock_auth):
         mock_auth.return_value = True
-        
+
         payload = {
             "name": "New Category",
             "description": "New Category Description"
         }
-        
+
         response = self.client.post(
             '/api/v1/product/categories',
             data=json.dumps(payload),
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer test-token'
+                'Authorization': f'Bearer test-token'  # noqa
             }
         )
-        
+
         self.assertEqual(response.status_code, 201)
         data = json.loads(response.data)
         self.assertEqual(data['name'], "New Category")
@@ -79,9 +82,9 @@ class ProductApiTestCase(BaseTestCase):
     @patch('marketplace.auth.utils.token_required')
     def test_get_products_ok(self, mock_auth):
         _, product, _ = init_product_data()
-        
+
         response = self.client.get('/api/v1/product/items')
-        
+
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertTrue(isinstance(data, list))
@@ -91,7 +94,7 @@ class ProductApiTestCase(BaseTestCase):
     def test_create_product_ok(self, mock_auth):
         category, _, _ = init_product_data()
         mock_auth.return_value = True
-        
+
         payload = {
             "seller_id": str(uuid4()),
             "category_id": str(category.id),
@@ -102,16 +105,16 @@ class ProductApiTestCase(BaseTestCase):
             "stock_quantity": 20,
             "sku": "TEST-SKU-002"
         }
-        
+
         response = self.client.post(
             '/api/v1/product/items',
             data=json.dumps(payload),
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer test-token'
+                'Authorization': f'Bearer test-token'  # noqa
             }
         )
-        
+
         self.assertEqual(response.status_code, 201)
         data = json.loads(response.data)
         self.assertEqual(data['name'], "New Product")
@@ -119,9 +122,9 @@ class ProductApiTestCase(BaseTestCase):
     @patch('marketplace.auth.utils.token_required')
     def test_get_pricing_ok(self, mock_auth):
         _, _, pricing = init_product_data()
-        
+
         response = self.client.get('/api/v1/product/pricing')
-        
+
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertTrue(isinstance(data, list))
@@ -131,23 +134,23 @@ class ProductApiTestCase(BaseTestCase):
     def test_create_pricing_ok(self, mock_auth):
         _, product, _ = init_product_data()
         mock_auth.return_value = True
-        
+
         payload = {
             "product_id": str(product.id),
             "base_price": 150.00,
             "currency": "USD",
             "valid_from": "2024-01-01T00:00:00"
         }
-        
+
         response = self.client.post(
             '/api/v1/product/pricing',
             data=json.dumps(payload),
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer test-token'
+                'Authorization': f'Bearer test-token'  # noqa
             }
         )
-        
+
         self.assertEqual(response.status_code, 201)
         data = json.loads(response.data)
-        self.assertEqual(float(data['base_price']), 150.00) 
+        self.assertEqual(float(data['base_price']), 150.00)

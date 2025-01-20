@@ -1,9 +1,10 @@
-from flask import Blueprint, request
+from flask import request
 from flask_restx import Resource, Namespace, fields
-from marketplace import db, api
-from marketplace.persistence.model import Merchant
+
+from marketplace import db
+from marketplace.auth.utils import token_required
 from marketplace.merchant.v1.serializers import merchant_schema, merchants_schema
-from marketplace.auth.utils import token_required, admin_required
+from marketplace.persistence.model import Merchant
 
 # Create namespace
 merchant_ns = Namespace('merchants', description='Merchant operations')
@@ -25,6 +26,7 @@ merchant_response = merchant_ns.model('MerchantResponse', {
     'updated_at': fields.DateTime(description='Last update date')
 })
 
+
 @merchant_ns.route('/')
 class MerchantList(Resource):
     @merchant_ns.doc('list_merchants')
@@ -43,7 +45,7 @@ class MerchantList(Resource):
     def post(self, current_user):
         """Create a new merchant (Auth required)"""
         data = request.get_json()
-        
+
         if Merchant.query.filter_by(name=data.get('name')).first():
             return {'message': 'Merchant name already exists'}, 400
 
@@ -59,6 +61,7 @@ class MerchantList(Resource):
             return merchant_schema.dump(merchant), 201
         except Exception as e:
             return {'message': str(e)}, 400
+
 
 @merchant_ns.route('/<int:id>')
 @merchant_ns.param('id', 'The merchant identifier')

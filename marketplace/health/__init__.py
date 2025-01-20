@@ -1,1 +1,1 @@
-from marketplace.health.routes import health_ns
+from marketplace.health.routes import health_ns  # noqa
