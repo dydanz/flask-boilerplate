@@ -14,14 +14,12 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, 3.10]
+        python-version: ['3.9', '3.10', '3.11']  # Updated versions
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
+    - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4  # Updated to v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -49,7 +47,7 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest --cov=flask-boilerplate tests/
+        pytest --cov=marketplace tests/  # Fixed path
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
