@@ -86,6 +86,13 @@ We use Alembic for database migrations. While the commands below still work, mod
 (venv) $ python db migrate init
 (venv) $ python db migrate migrate
 (venv) $ python db migrate upgrade
+
+#if you want to hard-reset the database (all data will be lost)
+- Drop all tables on the database, then execute the following command
+(venv) $ rm -rf migrations/
+(venv) $ flask db init
+(venv) $ flask db migrate -m "Initial migration with all models"
+(venv) $ flask db upgrade
 ```
 
 4. Testing

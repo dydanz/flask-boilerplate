@@ -1,5 +1,9 @@
 from datetime import datetime
+import uuid
 import bcrypt
+from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSON
+from sqlalchemy.types import Enum as SQLEnum
+import enum
 from marketplace import db
 
 class User(db.Model):
@@ -52,3 +56,64 @@ class Merchant(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+
+class ProductStatus(enum.Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    OUT_OF_STOCK = "out_of_stock"
+    DELETED = "deleted"
+
+class ProductCategory(db.Model):
+    __tablename__ = 'product_categories'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = db.Column(db.String(100), nullable=False)
+    parent_id = db.Column(UUID(as_uuid=True), db.ForeignKey('product_categories.id'), nullable=True)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Self-referential relationship for hierarchical categories
+    children = db.relationship('ProductCategory', 
+        backref=db.backref('parent', remote_side=[id]),
+        lazy='dynamic')
+
+class ProductItem(db.Model):
+    __tablename__ = 'product_items'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    seller_id = db.Column(UUID(as_uuid=True), nullable=False)
+    category_id = db.Column(UUID(as_uuid=True), db.ForeignKey('product_categories.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
+    currency = db.Column(db.String(3), nullable=False)
+    stock_quantity = db.Column(db.Integer, default=0)
+    status = db.Column(SQLEnum(ProductStatus), default=ProductStatus.ACTIVE)
+    images = db.Column(ARRAY(db.String), default=[])
+    tags = db.Column(ARRAY(db.String), default=[])
+    sku = db.Column(db.String(50), unique=True)
+    attributes = db.Column(JSON)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    category = db.relationship('ProductCategory', backref='products')
+    pricing_history = db.relationship('ProductPricing', backref='product', lazy='dynamic')
+
+class ProductPricing(db.Model):
+    __tablename__ = 'product_pricing'
+
+    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    product_id = db.Column(UUID(as_uuid=True), db.ForeignKey('product_items.id'), nullable=False)
+    base_price = db.Column(db.Numeric(10, 2), nullable=False)
+    discount_price = db.Column(db.Numeric(10, 2))
+    currency = db.Column(db.String(3), nullable=False)
+    valid_from = db.Column(db.DateTime, nullable=False)
+    valid_to = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class UserSession:
+    """Mock class for testing"""
+    pass
